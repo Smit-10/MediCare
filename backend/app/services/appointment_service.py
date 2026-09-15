@@ -184,12 +184,7 @@ def get_patient_appointments(user_id: int):
     return appointments
 
 
-def reschedule_appointment(
-    user_id: int,
-    appointment_id: int,
-    appointment_date,
-    appointment_time
-):
+def reschedule_appointment(user_id: int, appointment_id: int, appointment_date, appointment_time):
     patient_id = get_patient_id(user_id)
 
     if patient_id is None:
@@ -316,3 +311,70 @@ def reschedule_appointment(
     connection.close()
 
     return updated_appointment, "success"
+
+
+def cancel_appoinment(user_id: int, appointment_id: int):
+    patient_id = get_patient_id(user_id)
+    
+    if patient_id is None:
+        return None, "patient_not_found"
+    
+    connection = get_connection()
+    cursor = connection.cursor()
+    
+    # checking appointment belongs to the patient
+    cursor.execute(
+        """
+        SELECT appointment_id, status FROM appointments
+        WHERE appointment_id = %s AND patient_id = %s
+        """,
+        (appointment_id, patient_id)
+    )
+    
+    appointment = cursor.fetchone()
+    
+    if appointment is None:
+        cursor.close()
+        connection.close()
+        
+        return None, "appointment_not_found"
+    
+    status = appointment[1]
+    
+    # Check whether appointment is cancelled
+    if status in ('Completed', 'Cancelled', 'Rejection'):
+        cursor.close()
+        connection.close()
+        
+        return None, "cannot_cancel"
+    
+    # Cancel appointment
+    cursor.execute(
+        """
+        UPDATE appointments
+        SET
+            status = 'Cancelled',
+            updated_at = CURRENT_TIMESTAMP
+        WHERE appointment_id = %s AND patient_id = %s
+        RETURNING
+        appointment_id,
+        patient_id,
+        doctor_id,
+        appointment_date,
+        appointment_time,
+        status,
+        reason,
+        created_at,
+        updated_at
+        """,
+        (appointment_id, patient_id)
+    )
+    
+    cancelled_appointment = cursor.fetchone()
+    
+    connection.commit()
+    
+    cursor.close()
+    connection.close()
+    
+    return cancelled_appointment, "success"

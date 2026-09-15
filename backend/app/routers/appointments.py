@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.auth.jwt_handler import get_current_user
-from app.services.appointment_service import book_appointment, get_patient_appointments, reschedule_appointment
+from app.services.appointment_service import book_appointment, get_patient_appointments, reschedule_appointment, cancel_appoinment
 from app.schemas.appointment import AppointmentCreate, AppointmentResponse, AppointmentReschedule
 
 router = APIRouter(
@@ -140,6 +140,49 @@ def reschedule_my_appointment(appointment_id: int, appointment: AppointmentResch
     
     return {
         "message": "Appointment rescheduled successfully",
+        "appointment": {
+            "appointment_id": result[0],
+            "patient_id": result[1],
+            "doctor_id": result[2],
+            "appointment_date": result[3],
+            "appointment_time": result[4],
+            "status": result[5],
+            "reason": result[6],
+            "created_at": result[7],
+            "updated_at": result[8]
+        }
+    }
+    
+@router.put("/{appointment_id}/cancel")
+def cancel_my_appointment(appointment_id: int, current_user: dict = Depends(get_current_user)):
+    if current_user["role"] != "patient":
+        raise HTTPException(
+            status_code=403,
+            detail="Only patients can cancel appointments"
+        )
+
+    result, Status = cancel_appoinment(current_user["user_id"], appointment_id)
+
+    if Status == "patient_not_found":
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Patient profile not found"
+        )
+
+    if Status == "appointment_not_found":
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Appointment not found"
+        )
+
+    if Status == "cannot_cancel":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This appointment cannot be cancelled"
+        )
+
+    return {
+        "message": "Appointment cancelled successfully",
         "appointment": {
             "appointment_id": result[0],
             "patient_id": result[1],
