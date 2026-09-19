@@ -22,3 +22,6 @@ class AppointmentResponse(BaseModel):
 class AppointmentReschedule(BaseModel):
     appointment_date: date
     apppointment_time: time
+
+class AppointmentStatusUpdate(BaseModel):
+    status: str

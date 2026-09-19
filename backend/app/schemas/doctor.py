@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from datetime import date, time, datetime
 
 class DoctorResponse(BaseModel):
     doctor_id: int
@@ -9,3 +10,15 @@ class DoctorResponse(BaseModel):
     experience: int
     bio: str
     availability: str
+    
+class DoctorAppointmentResponse(BaseModel):
+    appointment_id: int
+    patient_id: int
+    patient_name: str
+    patient_phone: str
+    appointment_date: date
+    appointment_time: time
+    status: str
+    reason: str
+    created_at: datetime
+    updated_at: datetime

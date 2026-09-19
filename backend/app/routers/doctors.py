@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, status, Depends
 from app.auth.jwt_handler import get_current_user
-from app.services.doctor_service import search_doctors
+from app.schemas.appointment import AppointmentStatusUpdate
+from app.services.doctor_service import search_doctors, get_doctor_appointments, update_appointment_status
 
 router = APIRouter(
     prefix="/doctors",
@@ -40,4 +41,93 @@ def get_doctors(specialization: str, current_user: dict = Depends(get_current_us
     return {
         "specialization": specialization,
         "doctors": result
+    }
+
+@router.get("/appointments")
+def get_my_appointments(current_user: dict = Depends(get_current_user)):
+    if current_user["role"] != "doctor":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only doctors can access doctor appointments"
+        )
+        
+    appointments = get_doctor_appointments(current_user["user_id"])
+    
+    if appointments is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Doctor profile not found"
+        )
+    
+    result = []
+    
+    for appointment in appointments:
+        result.append({
+            "appointment_id": appointment[0],
+            "patient_id": appointment[1],
+            "patient_name": appointment[2],
+            "patient_phone": appointment[3],
+            "appointment_date": appointment[4],
+            "appointment_time": appointment[5],
+            "status": appointment[6],
+            "reason": appointment[7],
+            "created_at": appointment[8],
+            "updated_at": appointment[9]
+        })
+        
+    return {
+        "appointments": result
+    }
+
+@router.put("/appointments/{appointment_id}/status")
+def update_status(appointment_id: int, appointment: AppointmentStatusUpdate, current_user:dict = Depends(get_current_user)):
+    if current_user["role"] != "doctor":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only doctors can update appointment status"
+        )
+    
+    if appointment.status not in ("Confirmed", "Rejected"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Status must be Confirmed or Rejection"
+        )
+    
+    result, Status = update_appointment_status(
+        current_user["user_id"], 
+        appointment_id, 
+        appointment.status
+    )
+    
+    if Status == 'doctor_not_found':
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Doctor profile not found"
+        )
+    
+    if Status == 'appointment_not_found':
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Appointment not found"
+        )
+    
+    if Status == 'invalid_status':
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only pending appointments can be accepted or rejected"
+        )
+    
+    return {
+        "message": "Appointment status updated successfully",
+        "appointment": {
+            "appointment_id": result[0],
+            "patient_id": result[1],
+            "doctor_id": result[2],
+            "appointment_date": result[3],
+            "appointment_time": result[4],
+            "status": result[5],
+            "reason": result[6],
+            "created_at": result[7],
+            "updated_at": result[8]
+        }
     }
