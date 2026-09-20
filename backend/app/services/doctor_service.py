@@ -53,6 +53,75 @@ def get_doctor_id(user_id: int):
     return doctor[0]
 
 
+def get_doctor_profile(user_id: int):
+    connection = get_connection()
+    cursor = connection.cursor()
+    
+    cursor.execute(
+        """
+        SELECT
+            d.doctor_id,
+            d.user_id,
+            d.name,
+            d.phone,
+            d.qualification,
+            d.experience,
+            d.bio,
+            d.availability,
+            s.specialization_id,
+            s.name AS specialization
+        FROM doctors d
+        JOIN specializations s
+            ON d.specialization_id = s.specialization_id
+        WHERE d.user_id = %s
+        """,
+        (user_id,)
+    )
+    
+    doctor = cursor.fetchone()
+    
+    cursor.close()
+    connection.close()
+    
+    return doctor
+
+
+def update_doctor_profile(
+    user_id: int,
+    name: str,
+    phone: str,
+    qualification: str,
+    experience: int,
+    bio: str
+):
+    connection = get_connection()
+    cursor = connection.cursor()
+    
+    cursor.execute(
+        """
+        UPDATE doctors
+        SET
+            name = %s,
+            phone = %s,
+            qualification = %s,
+            experience = %s,
+            bio = %s
+        WHERE user_id = %s
+        RETURNING
+            doctor_id, user_id, name, phone, qualification, experience, bio, availability
+        """,
+        (name, phone, qualification, experience, bio, user_id)
+    )
+    
+    doctor = cursor.fetchone()
+    connection.commit()
+    
+    cursor.close()
+    connection.close()
+    
+    return doctor
+
+
 def get_doctor_appointments(user_id: int):
     doctor_id = get_doctor_id(user_id)
     
@@ -160,3 +229,33 @@ def update_appointment_status(user_id: int, appointment_id: int, new_status: str
     connection.close()
     
     return updated_appointment, 'success'
+
+
+def update_doctor_availability(user_id: int, availability):
+    doctor_id = get_doctor_id(user_id)
+    
+    if doctor_id is None:
+        return None, "doctor_not_found"
+    
+    connection = get_connection()
+    cursor = connection.cursor()
+    
+    cursor.execute(
+        """
+        UPDATE doctors
+        SET
+            availability = %s
+        WHERE doctor_id = %s
+        RETURNING doctor_id, availability
+        """,
+        (availability, doctor_id)
+    )
+    
+    doctor = cursor.fetchone()
+    
+    connection.commit()
+    
+    cursor.close()
+    connection.close()
+    
+    return doctor, "success"

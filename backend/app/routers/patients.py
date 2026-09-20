@@ -10,6 +10,12 @@ router = APIRouter(
 
 @router.post("/profile", response_model=PatientResponse)
 def create_patient_profile(patient: PatientCreate, current_user: dict = Depends(get_current_user)):
+    if current_user["role"] != "patient":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only patients can create a patient profile"
+        )
+        
     result = create_patient(
         current_user["user_id"],
         patient.name,
@@ -37,6 +43,11 @@ def create_patient_profile(patient: PatientCreate, current_user: dict = Depends(
 
 @router.get("/profile", response_model=PatientResponse)
 def get_patient_profile(current_user: dict = Depends(get_current_user)):
+    if current_user["role"] != "patient":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only patients can access this profile"
+        )
     result = get_patient(current_user["user_id"])
     
     if result is None:
@@ -57,6 +68,11 @@ def get_patient_profile(current_user: dict = Depends(get_current_user)):
 
 @router.put("/profile", response_model=PatientResponse)
 def update_patient_profile(patient: PatientUpdate, current_user: dict = Depends(get_current_user)):
+    if current_user["role"] != "patient":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only patients can update their profile"
+        )
     result = update_patient(
         current_user["user_id"],
         patient.name,
