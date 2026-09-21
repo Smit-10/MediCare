@@ -32,3 +32,26 @@ class DoctorAppointmentResponse(BaseModel):
 
 class DoctorAvailabilityUpdate(BaseModel):
     availability: str
+
+class PatientListItem(BaseModel):
+    patient_id: int
+    name: str
+    phone: str
+    dob: date
+    gender: str
+
+class PatientMedicalHistoryAppointment(BaseModel):
+    appointment_id: int
+    appointment_date: date
+    appointment_time: time
+    status: str
+    reason: str
+
+class PatientMedicalHistory(BaseModel):
+    patient_id: int
+    name: str
+    phone: str
+    dob: date
+    gender: str
+    address: str
+    appointment: list[PatientMedicalHistoryAppointment]

@@ -8,7 +8,9 @@ from app.services.doctor_service import (
     update_doctor_profile,
     get_doctor_appointments,
     update_appointment_status,
-    update_doctor_availability
+    update_doctor_availability,
+    get_my_patients,
+    get_patient_medical_history
 )
 
 router = APIRouter(
@@ -225,4 +227,83 @@ def update_availability(availability: DoctorAvailabilityUpdate, current_user: di
     return {
         "message": "Doctor availability updated successfully",
         "availability": result[1]
+    }
+
+@router.get("/my-patients")
+def get_my_patients_list(current_user: dict = Depends(get_current_user)):
+    if current_user["role"] != "doctor":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only doctors can access this endpoint"
+        )
+    
+    patients, Status = get_my_patients(current_user["user_id"])
+    
+    if Status == "doctor_not_found":
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Doctor profile not found"
+        )
+    
+    patient_list = []
+    
+    for patient in patients:
+        patient_list.append({
+            "patient_id": patient[0],
+            "name": patient[1],
+            "phone": patient[2],
+            "dob": patient[3],
+            "gender": patient[4]
+        })
+    
+    return {
+        "patients": patient_list
+    }
+
+@router.get("/my-patients/{patient_id}/medical_history")
+def get_patient_history(patient_id: int, current_user: dict = Depends(get_current_user)):
+    if current_user["role"] != "doctor":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only doctors can access patient medical history"
+        )
+    
+    result, Status = get_patient_medical_history(current_user["user_id"], patient_id)
+    
+    if Status == "doctor_not_found":
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Doctor profile not found"
+        )
+    
+    if Status == "patient_not_found":
+        raise HTTPException(
+            status_code=404,
+            detail="Patient not found in your patient list"
+        )
+    
+    patient = result["patient"]
+    appointments = result["appointments"]
+    
+    appointment_list = []
+
+    for appointment in appointments:
+        appointment_list.append({
+            "appointment_id": appointment[0],
+            "appointment_date": appointment[1],
+            "appointment_time": appointment[2],
+            "status": appointment[3],
+            "reason": appointment[4]
+        })
+    
+    return {
+        "patient": {
+            "patient_id": patient[0],
+            "name": patient[1],
+            "phone": patient[2],
+            "dob": patient[3],
+            "gender": patient[4],
+            "address": patient[5]
+        },
+        "appointments": appointment_list
     }

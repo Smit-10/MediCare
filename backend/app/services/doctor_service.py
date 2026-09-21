@@ -259,3 +259,119 @@ def update_doctor_availability(user_id: int, availability):
     connection.close()
     
     return doctor, "success"
+
+
+def get_my_patients(user_id: int):
+    doctor_id = get_doctor_id(user_id)
+    
+    if doctor_id is None:
+        return None, "doctor_not_found"
+    
+    connection = get_connection()
+    cursor = connection.cursor()
+    
+    cursor.execute(
+        """
+        SELECT DISTINCT
+            p.patient_id,
+            p.name,
+            p.phone,
+            p.dob,
+            p.gender
+        FROM patients p
+        JOIN appointments a
+            ON p.patient_id = a.patient_id
+        WHERE a.doctor_id = %s
+        ORDER BY p.name
+        """,
+        (doctor_id,)
+    )
+    
+    patients = cursor.fetchall()
+    
+    cursor.close()
+    connection.close()
+    
+    return patients, "success"
+
+def get_patient_medical_history(user_id: int, patient_id: int):
+    doctor_id = get_doctor_id(user_id)
+
+    if doctor_id is None:
+        return None, "doctor_not_found"
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    # Check that this patient belongs to this doctor's patient list
+    cursor.execute(
+        """
+        SELECT 1
+        FROM appointments
+        WHERE patient_id = %s
+          AND doctor_id = %s
+        LIMIT 1
+        """,
+        (patient_id, doctor_id)
+    )
+
+    appointment_exists = cursor.fetchone()
+
+    if appointment_exists is None:
+        cursor.close()
+        connection.close()
+
+        return None, "patient_not_found"
+
+    # Get patient details
+    cursor.execute(
+        """
+        SELECT
+            patient_id,
+            name,
+            phone,
+            dob,
+            gender,
+            address
+        FROM patients
+        WHERE patient_id = %s
+        """,
+        (patient_id,)
+    )
+
+    patient = cursor.fetchone()
+
+    if patient is None:
+        cursor.close()
+        connection.close()
+
+        return None, "patient_not_found"
+
+    # Get ONLY this doctor's appointments with this patient
+    cursor.execute(
+        """
+        SELECT
+            appointment_id,
+            appointment_date,
+            appointment_time,
+            status,
+            reason
+        FROM appointments
+        WHERE patient_id = %s
+          AND doctor_id = %s
+        ORDER BY
+            appointment_date DESC,
+            appointment_time DESC
+        """,
+        (patient_id, doctor_id)
+    )
+
+    appointments = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    return {
+        "patient": patient,
+        "appointments": appointments
+    }, "success"
