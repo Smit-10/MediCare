@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routers import auth, patients, doctors, appointments
+from app.routers import auth, patients, doctors, appointments,admins
 
 app = FastAPI(title="MediCare")
 
@@ -7,6 +7,7 @@ app.include_router(auth.router)
 app.include_router(patients.router)
 app.include_router(doctors.router)
 app.include_router(appointments.router)
+app.include_router(admins.router)
 
 @app.get("/")
 def home():
