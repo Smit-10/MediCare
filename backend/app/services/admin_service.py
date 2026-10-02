@@ -494,13 +494,49 @@ def update_patient_status(patient_id:int,status:str):
         }, "success"
 
 
-def get_all_appointments():
+# def get_all_appointments():
+#     connection = get_connection()
+#     cursor = connection.cursor()
+
+#     try:
+#         cursor.execute(
+#             """
+#             SELECT
+#                 a.appointment_id,
+#                 p.name,
+#                 d.name,
+#                 s.name,
+#                 a.appointment_date,
+#                 a.appointment_time,
+#                 a.reason,
+#                 a.status
+#             FROM appointments a
+#             JOIN patients p
+#                 ON a.patient_id = p.patient_id
+#             JOIN doctors d
+#                 ON a.doctor_id = d.doctor_id
+#             JOIN specializations s
+#                 ON d.specialization_id = s.specialization_id
+#             ORDER BY
+#                 a.appointment_date DESC,
+#                 a.appointment_time DESC
+#             """
+#         )
+
+#         appointments = cursor.fetchall()
+
+#         return appointments
+#     finally:
+#         cursor.close()
+#         connection.close()
+
+
+def get_filter_and_all_appointments(status,appointment_date,doctor_id):
     connection = get_connection()
     cursor = connection.cursor()
 
     try:
-        cursor.execute(
-            """
+        query = """
             SELECT
                 a.appointment_id,
                 p.name,
@@ -517,11 +553,30 @@ def get_all_appointments():
                 ON a.doctor_id = d.doctor_id
             JOIN specializations s
                 ON d.specialization_id = s.specialization_id
-            ORDER BY
-                a.appointment_date DESC,
-                a.appointment_time DESC
+            WHERE 1 = 1
             """
-        )
+
+        parameter = []
+
+        if status is not None:
+            query += """ AND a.status = %s """
+            parameter.append(status)
+
+        if appointment_date is not None:
+            query += """ AND a.appointment_date = %s """
+            parameter.append(appointment_date)
+
+        if doctor_id is not None:
+            query += """ AND a.doctor_id = %s """
+            parameter.append(doctor_id)
+
+        query += """
+                ORDER BY
+                a.appointment_date ASC,
+                a.appointment_time ASC
+                """
+
+        cursor.execute(query,parameter)
 
         appointments = cursor.fetchall()
 

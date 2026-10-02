@@ -1,8 +1,9 @@
 from fastapi import APIRouter,HTTPException,status,Depends
-from app.services.admin_service import get_all_details,add_doctor,get_all_doctors,get_specific_doctor,get_update_doctor,update_doctor_status,search_patients,get_specific_patient,update_patient_status,get_all_appointments,get_specific_appointment,update_appointment_status
+from app.services.admin_service import get_all_details,add_doctor,get_all_doctors,get_specific_doctor,get_update_doctor,update_doctor_status,search_patients,get_specific_patient,update_patient_status,get_specific_appointment,update_appointment_status,get_filter_and_all_appointments
 from app.auth.jwt_handler import get_current_user
 from app.schemas.admin import Doctor,Update_Doctor
 from app.services.auth_service import hash_password
+from datetime import date,datetime 
 
 router = APIRouter(
     prefix="/admin",
@@ -46,9 +47,9 @@ router = APIRouter(
 
 
 @router.get("/dashboard")
-def get_details():  # get_details(current_user:dict=Depends(get_current_user))
-    # if current_user["role"] != "admin":
-    #     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Only Admin can Access")
+def get_details(current_user:dict=Depends(get_current_user)): # get_details(): 
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Only Admin can Access")
     
     all_details = get_all_details()
 
@@ -61,9 +62,9 @@ def get_details():  # get_details(current_user:dict=Depends(get_current_user))
 
 
 @router.post("/doctors")
-def create_doctors(doctor:Doctor): #create_doctors(doctor:Doctor,current_user:dict=Depends(get_current_user)):
-    # if current_user["role"] != "admin":
-    #         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Only Admin can Access")
+def create_doctors(doctor:Doctor,current_user:dict=Depends(get_current_user)): #create_doctors(doctor:Doctor): 
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Only Admin can Access")
     
     hash_passwords=hash_password(doctor.password)
 
@@ -88,7 +89,10 @@ def create_doctors(doctor:Doctor): #create_doctors(doctor:Doctor,current_user:di
 
 
 @router.get("/doctors")
-def view_all_doctors():
+def view_all_doctors(current_user:dict=Depends(get_current_user)):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Only Admin can Access")
+    
     all_doctors = get_all_doctors()
 
     result = []
@@ -110,7 +114,10 @@ def view_all_doctors():
     }
 
 @router.get("/doctors/{doctor_id}")
-def view_specific_doctor(doctor_id:int):
+def view_specific_doctor(doctor_id:int,current_user:dict=Depends(get_current_user)):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Only Admin can Access")
+    
     doctor = get_specific_doctor(doctor_id=doctor_id)
 
     return{
@@ -127,7 +134,9 @@ def view_specific_doctor(doctor_id:int):
 
 
 @router.put("/doctors/{doctor_id}")
-def update_doctors(doctor_id:int,doctor:Update_Doctor):
+def update_doctors(doctor_id:int,doctor:Update_Doctor,current_user:dict=Depends(get_current_user)):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Only Admin can Access")
 
     updated_doctor = get_update_doctor(
         doctor_id=doctor_id,
@@ -158,12 +167,9 @@ def update_doctors(doctor_id:int,doctor:Update_Doctor):
 
 
 @router.put("/doctors/{doctor_id}/status")
-def change_doctor_status(doctor_id:int,status:str):
-    # if current_user["role"] != "admin":
-    #     raise HTTPException(
-    #         status_code=403,
-    #         detail="Only admin can change doctor status"
-    #     )
+def change_doctor_status(doctor_id:int,status:str,current_user:dict=Depends(get_current_user)):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Only Admin can Access")
 
     status=status.capitalize()
 
@@ -204,7 +210,9 @@ def change_doctor_status(doctor_id:int,status:str):
 
 
 @router.get("/patients")
-def search_patient(search:str = None):
+def search_patient(search:str = None,current_user:dict=Depends(get_current_user)):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Only Admin can Access")
     
     all_patients=search_patients(search)
 
@@ -227,7 +235,10 @@ def search_patient(search:str = None):
 
 
 @router.get("/patients/{patient_id}")
-def view_specific_patient(patient_id:int):
+def view_specific_patient(patient_id:int,current_user:dict=Depends(get_current_user)):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Only Admin can Access")
+    
     result = get_specific_patient(patient_id)
     if result is None:
         raise HTTPException(status_code=404,detail="Patient not found")
@@ -263,32 +274,64 @@ def view_specific_patient(patient_id:int):
 
 
 @router.put("/patients/{patient_id}/status")
-def change_patient_status(patient_id:int,status:str):
-    # if current_user["role"] != "admin":
-        #     raise HTTPException(
-        #         status_code=403,
-        #         detail="Only admin can change doctor status"
-        #     )
+def change_patient_status(patient_id:int,status:str,current_user:dict=Depends(get_current_user)):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Only Admin can Access")
     
-        status=status.capitalize()
-    
-        if status not in ["Active", "Inactive"]:
-            raise HTTPException(status_code=400,detail="Status must be active or inactive")
-    
-        result, message = update_patient_status(patient_id,status)
-    
-        if message != "success":
-            raise HTTPException(status_code=404,detail=message)
-    
-        return {
-            "message": "Patient status updated successfully",
-            "patient": result
-        }
+    status=status.capitalize()
+
+    if status not in ["Active", "Inactive"]:
+        raise HTTPException(status_code=400,detail="Status must be active or inactive")
+
+    result, message = update_patient_status(patient_id,status)
+
+    if message != "success":
+        raise HTTPException(status_code=404,detail=message)
+
+    return {
+        "message": "Patient status updated successfully",
+        "patient": result
+    }
+
+
+# @router.get("/appointments")
+# def view_all_appointments():
+#     appointments = get_all_appointments()
+
+#     appointments_result = []
+
+#     for appointment in appointments:
+#         appointments_result.append({
+#             "appointment_id": appointment[0],
+#             "patient": appointment[1],
+#             "doctor": appointment[2],
+#             "specialization": appointment[3],
+#             "date": appointment[4],
+#             "time": appointment[5],
+#             "reason": appointment[6],
+#             "status": appointment[7]
+#         })
+
+#     return {
+#         "appointments": appointments_result
+#     }
 
 
 @router.get("/appointments")
-def view_all_appointments():
-    appointments = get_all_appointments()
+def view_all_appointments_with_filter(status:str = None,appointment_date:str = None,doctor_id:int = None,current_user:dict=Depends(get_current_user)):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Only Admin can Access")
+    
+    if status: 
+        status = status.capitalize()
+        if status not in ["Pending","Confirmed","Rejected","Completed","Cancelled"]:
+            raise HTTPException(status_code=400,detail="Status must be Pending,Confirmed,Rejected,Completed or Cancelled")
+    if appointment_date:
+        try:
+            appointment_date = datetime.strptime(appointment_date, "%d/%m/%Y").date()
+        except Exception:
+            raise HTTPException(status_code=400,detail="Date must be in DD/MM/YYYY format")
+    appointments = get_filter_and_all_appointments(status=status,appointment_date=appointment_date,doctor_id=doctor_id)
 
     appointments_result = []
 
@@ -298,7 +341,7 @@ def view_all_appointments():
             "patient": appointment[1],
             "doctor": appointment[2],
             "specialization": appointment[3],
-            "date": appointment[4],
+            "date": appointment[4].strftime("%d/%m/%Y"),
             "time": appointment[5],
             "reason": appointment[6],
             "status": appointment[7]
@@ -310,7 +353,10 @@ def view_all_appointments():
 
 
 @router.get("/appointments/{appointment_id}")
-def view_specific_appointment(appointment_id:int):
+def view_specific_appointment(appointment_id:int,current_user:dict=Depends(get_current_user)):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Only Admin can Access")
+    
     specific_appointment = get_specific_appointment(appointment_id)
 
     if specific_appointment is None:
@@ -336,12 +382,9 @@ def view_specific_appointment(appointment_id:int):
 
 
 @router.put("/appointments/{appointment_id}/status")
-def change_appointment_status(appointment_id:int,status:str):
-    # if current_user["role"] != "admin":
-        #     raise HTTPException(
-        #         status_code=403,
-        #         detail="Only admin can change doctor status"
-        #     )
+def change_appointment_status(appointment_id:int,status:str,current_user:dict=Depends(get_current_user)):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Only Admin can Access")
 
     status=status.capitalize()
 
