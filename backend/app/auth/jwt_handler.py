@@ -57,7 +57,7 @@ def get_current_user(request: Request, token: str = Depends(oauth2_scheme)):
     cursor.execute(
         """
         SELECT user_id, username, email, role, status
-        FROM users WHERE user_id %s
+        FROM users WHERE user_id = %s
         """,
         (user_id,)
     )
@@ -77,58 +77,6 @@ def get_current_user(request: Request, token: str = Depends(oauth2_scheme)):
             headers={
                 "WWW-Authenticate": "Bearer"
             }
-        )
-    
-    return {
-        "user_id": user[0],
-        "username": user[1],
-        "email": user[2],
-        "role": user[3],
-        "status": user[4]
-    }
-
-def get_current_user(token: str = Depends(oauth2_scheme)):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"}
-    )
-    
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id = payload.get("user_id")
-        
-        if user_id is None:
-            raise credentials_exception
-        
-    except jwt.InvalidTokenError:
-        raise credentials_exception
-    
-    connection = get_connection()
-    cursor = connection.cursor()
-    
-    cursor.execute(
-        """
-        SELECT user_id, username, email, role, status
-        FROM users
-        WHERE user_id = %s
-        """,
-        (user_id,)
-    )
-    
-    user = cursor.fetchone()
-    
-    cursor.close()
-    connection.close()
-    
-    if user is None:
-        raise credentials_exception
-    
-    if user[4] != 'Active':
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User account is inactive",
-            headers={"WWW-Authenticate": "Bearer"}
         )
     
     return {

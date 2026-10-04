@@ -1,8 +1,8 @@
-from fastapi import APIRouter, HTTPException, status, Depends, Request, Response
-from fastapi.responses import RedirectResponse
+from fastapi import APIRouter, HTTPException, status, Depends, Request
+from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from authlib.integrations.starlette_client import OAuth
-from app.schemas.auth import UserLogin, UserRegister, Token
+from app.schemas.auth import UserRegister, Token
 from app.services.auth_service import register_user, login_user
 from app.services.google_auth_service import get_or_create_google_user
 from app.auth.jwt_handler import get_current_user, create_access_token
@@ -57,7 +57,23 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
             detail="Invalid email or password" 
         )
     
-    return result
+    response = JSONResponse(
+        content={
+            "access_token": result["access_token"],
+            "token_type": result["token_type"]
+        }
+    )
+    
+    response.set_cookie(
+        key="access_token",
+        value = result["access_token"],
+        httponly=True,
+        secure=COOKIE_SECURE,
+        samesite=COOKIE_SAMESITE,
+        max_age=ACCESS_TOKEN_EXPIRE_MINUTES*60
+    )
+    
+    return response
 
 @router.get("/me")
 def get_my_account(current_user: dict = Depends(get_current_user)):
@@ -108,7 +124,7 @@ async def google_callback(request: Request):
         name or email.split("@")[0]
     )
     
-    if user["status"] != "active":
+    if user["status"] != "Active":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User account is inactive"
@@ -132,6 +148,23 @@ async def google_callback(request: Request):
         secure=COOKIE_SECURE,
         samesite=COOKIE_SAMESITE,
         max_age=ACCESS_TOKEN_EXPIRE_MINUTES * 60
+    )
+    
+    return response
+
+@router.post("/logout")
+def logout():
+    response = JSONResponse(
+        content={
+            "message": "Logged out successfully"
+        }
+    )
+    
+    response.delete_cookie(
+        key="access_token",
+        httponly=True,
+        secure=COOKIE_SECURE,
+        samesite=COOKIE_SAMESITE
     )
     
     return response

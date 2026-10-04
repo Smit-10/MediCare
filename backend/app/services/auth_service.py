@@ -55,6 +55,10 @@ def login_user(email: str, password: str):
     if user is None:
         return None
     
+    # Google-only accounts do not have a password
+    if user[3] is None:
+        return None
+    
     password_valid = verify_password(password, user[3])
     
     if not password_valid:

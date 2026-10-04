@@ -1,7 +1,4 @@
-import secrets
-
 from app.database import get_connection
-from app.auth.password import hash_password
 
 def get_or_create_google_user(google_id: str, email: str, name: str):
     connection = get_connection()
@@ -81,7 +78,7 @@ def get_or_create_google_user(google_id: str, email: str, name: str):
         VALUES (%s, %s, NULL, %s, 'patient', 'Active')
         RETURNING user_id, username, email, role, status
         """,
-        (name, google_id)
+        (name, email, google_id)
     )
 
     user = cursor.fetchone()
