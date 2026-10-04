@@ -1,7 +1,14 @@
 from fastapi import FastAPI
 from app.routers import auth, patients, doctors, appointments
+from starlette.middleware.sessions import SessionMiddleware
+from app.config import SECRET_KEY
 
 app = FastAPI(title="MediCare")
+
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=SECRET_KEY
+)
 
 app.include_router(auth.router)
 app.include_router(patients.router)
