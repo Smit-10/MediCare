@@ -18,7 +18,7 @@ import {
   Dashboard,
   Doctors,
   Appointments,
-  Prescriptions,
+  // Prescriptions,
   Payment,
   Profile,
   ChangePassword,
@@ -111,7 +111,7 @@ function AppRoutes() {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="doctors" element={<Doctors />} />
           <Route path="appointments" element={<Appointments />} />
-          <Route path="prescriptions" element={<Prescriptions />} />
+          {/* <Route path="prescriptions" element={<Prescriptions />} /> */}
           <Route path="payment" element={<Payment />} />
           <Route path="profile" element={<Profile />} />
           <Route path="change-password" element={<ChangePassword />} />
