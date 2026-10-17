@@ -28,7 +28,7 @@ export default function DoctorLayout() {
     ["dashboard", "Dashboard", LayoutDashboard],
     ["appointments", "Appointments", CalendarDays],
     ["availability", "Availability", Clock3],
-    ["prescriptions", "Prescriptions", FileText],
+    // ["prescriptions", "Prescriptions", FileText],
     ["patients", "Patients", UsersRound],
     ["profile", "Profile", UserRound],
     ["change-password", "Change Password", LockKeyhole],
