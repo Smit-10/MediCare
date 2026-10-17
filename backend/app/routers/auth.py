@@ -2,8 +2,9 @@ from fastapi import APIRouter, HTTPException, status, Depends, Request
 from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from authlib.integrations.starlette_client import OAuth
-from app.schemas.auth import UserRegister, Token
-from app.services.auth_service import register_user, login_user
+from app.schemas.auth import UserRegister, Token, ForgotPasswordRequest, ResetPasswordRequest, ChangePasswordRequest
+from app.services.auth_service import register_user, login_user, change_password
+from app.services.password_reset_service import request_password_reset, reset_password as reset_password_service
 from app.services.google_auth_service import get_or_create_google_user
 from app.auth.jwt_handler import get_current_user, create_access_token
 from app.config import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI, FRONTEND_URL, COOKIE_SAMESITE, COOKIE_SECURE, ACCESS_TOKEN_EXPIRE_MINUTES
@@ -168,3 +169,68 @@ def logout():
     )
     
     return response
+
+@router.post("/forgot-password")
+def forgot_password(data: ForgotPasswordRequest):
+    try:
+        request_password_reset(str(data.email))
+    except Exception:
+        # Keep internal errors out of the API response.
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unable to process the request. Please try again later."
+        )
+
+    return {
+        "message": (
+            "If an eligible account exists for this email, "
+            "an OTP will be sent."
+        )
+    }
+
+
+@router.post("/reset-password")
+def reset_password_endpoint(data: ResetPasswordRequest):
+    try:
+        success = reset_password_service(
+            email=str(data.email),
+            otp=data.otp,
+            new_password=data.new_password
+        )   
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unable to reset password. Please try again later."
+        )
+
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired OTP."
+        )
+
+    return {"message": "Password reset successfully."}
+
+
+@router.post("/change-password")
+def change_password_endpoint(data: ChangePasswordRequest, current_user: dict = Depends(get_current_user)):
+    try:
+        change_password(
+            user_id=current_user["user_id"],
+            current_password=data.current_password,
+            new_password=data.new_password
+        )
+
+        return {"message": "Password changed successfully."}
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unable to change password. Please try again later."
+        )

@@ -76,3 +76,61 @@ def login_user(email: str, password: str):
         "access_token": access_token,
         "token_type": "bearer"
     }
+
+
+def change_password(user_id: int, current_password: str, new_password: str):
+    if current_password == new_password:
+        raise ValueError("New password must differ from current password.")
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute(
+            """
+            SELECT password_hash
+            FROM users
+            WHERE user_id = %s
+            """,
+            (user_id,)
+        )
+
+        user = cursor.fetchone()
+
+        if user is None:
+            raise ValueError("User account not found.")
+
+        stored_hash = user[0]
+
+        # Google-only accounts do not have a password.
+        if not stored_hash:
+            raise ValueError(
+                "This account does not have a password. "
+                "Password change is unavailable."
+            )
+
+        if not verify_password(current_password, stored_hash):
+            raise ValueError("Current password is incorrect.")
+
+        new_password_hash = hash_password(new_password)
+
+        cursor.execute(
+            """
+            UPDATE users
+            SET password_hash = %s,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = %s
+            """,
+            (new_password_hash, user_id)
+        )
+
+        connection.commit()
+        return True
+
+    except Exception:
+        connection.rollback()
+        raise
+
+    finally:
+        cursor.close()
+        connection.close()
