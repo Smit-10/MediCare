@@ -14,6 +14,10 @@ router = APIRouter(
     tags=["Authentication"]
 )
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 # Google OAuth Configuration
 oauth = OAuth()
 
@@ -175,7 +179,7 @@ def forgot_password(data: ForgotPasswordRequest):
     try:
         request_password_reset(str(data.email))
     except Exception:
-        # Keep internal errors out of the API response.
+        logger.exception("Forgot password failed")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Unable to process the request. Please try again later."
