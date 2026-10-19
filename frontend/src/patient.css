@@ -1136,5 +1136,5 @@
 .password-change-card { max-width: 680px; }
 .password-change-card > p { color: #64748b; margin: 8px 0 20px; }
 .password-change-form { grid-template-columns: 1fr; }
-.password-show-option { display: flex !important; align-items: center; gap: 9px; }
+.password-show-option { display: flex !important; flex-direction: row !important; align-items: center; gap: 9px !important; }
 .password-show-option input { width: auto !important; }

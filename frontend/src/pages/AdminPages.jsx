@@ -211,24 +211,33 @@ export function AdminDoctors() {
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const [updatingId, setUpdatingId] = useState(null);
-
+    
   useEffect(() => {
     load();
   }, [load]);
 
   function update(e) {
+    e.target.name == "phone" ? setForm((previous) => ({
+      ...previous,
+      [e.target.name]: e.target.value.replace(/\D/g, ""),
+    })): 
     setForm((previous) => ({
       ...previous,
       [e.target.name]: e.target.value,
     }));
+    
   }
 
   async function add(e) {
     e.preventDefault();
-    setBusy(true);
     setError("");
     setNotice("");
 
+    // Validate phone number
+    if (!/^\d{10}$/.test(form.phone)) {
+      return setError("Phone number must contain exactly 10 digits.");
+    }
+    setBusy(true);
     try {
       await api("/admin/doctors", {
         method: "POST",
@@ -333,7 +342,7 @@ export function AdminDoctors() {
                 required
                 name={name}
                 type={type}
-                min={type === "number" ? "0" : undefined}
+                min={type === "number" ? "1" : undefined}
                 value={form[name]}
                 onChange={update}
               />
@@ -347,7 +356,7 @@ export function AdminDoctors() {
           </label>
 
           <div className="admin-form-wide">
-            <button className="admin-btn primary" disabled={busy}>
+            <button type="submit" className="admin-btn primary" disabled={busy}>
               {busy ? "Adding..." : "Add Doctor"}
             </button>
           </div>

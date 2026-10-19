@@ -21,7 +21,7 @@ class AppointmentResponse(BaseModel):
 
 class AppointmentReschedule(BaseModel):
     appointment_date: date
-    apppointment_time: time
+    appointment_time: time
 
 class AppointmentStatusUpdate(BaseModel):
     status: str

@@ -105,7 +105,7 @@ def reschedule_my_appointment(appointment_id: int, appointment: AppointmentResch
         current_user["user_id"],
         appointment_id,
         appointment.appointment_date,
-        appointment.apppointment_time
+        appointment.appointment_time
     )
     
     if Status == "patient_not_found":

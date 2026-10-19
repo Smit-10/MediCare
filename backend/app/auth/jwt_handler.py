@@ -56,8 +56,17 @@ def get_current_user(request: Request, token: str = Depends(oauth2_scheme)):
     
     cursor.execute(
         """
-        SELECT user_id, username, email, role, status
-        FROM users WHERE user_id = %s
+        SELECT
+            u.user_id,
+            u.username,
+            u.email,
+            u.role,
+            u.status,
+            s.name
+        FROM users u
+        LEFT JOIN doctors d ON d.user_id = u.user_id
+        LEFT JOIN specializations s ON s.specialization_id = d.specialization_id
+        WHERE u.user_id = %s
         """,
         (user_id,)
     )
@@ -84,5 +93,6 @@ def get_current_user(request: Request, token: str = Depends(oauth2_scheme)):
         "username": user[1],
         "email": user[2],
         "role": user[3],
-        "status": user[4]
+        "status": user[4],
+        "specialization": user[5]
     }

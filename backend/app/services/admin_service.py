@@ -160,16 +160,25 @@ def add_doctor(
     cursor = connection.cursor()
 
     try:
+
+        cursor.execute(
+                """SELECT user_id FROM users WHERE username = %s""", (name,)
+            )
+
+        existing_user = cursor.fetchone()
+        if existing_user:
+            connection.rollback()
+            return None,"Name alredy registered"
+         
         cursor.execute(
             """
         SELECT user_id FROM users WHERE email = %s 
             """,(email,)
         )
         existing_user = cursor.fetchone()
-
         if existing_user:
             connection.rollback()
-            return None,"Email Already Exist"
+            return None,"Email already registered"
 
 
         cursor.execute(

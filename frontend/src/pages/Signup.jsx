@@ -39,24 +39,53 @@ const Signup = () => {
   const submit = async (e) => {
     e.preventDefault();
     setError("");
-    if (form.password !== form.confirmPassword)
+
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+    // Validate phone number
+    if (!/^\d{10}$/.test(form.phone)) {
+      return setError("Phone number must contain exactly 10 digits.");
+    }
+
+    // Validate password strength
+    if (!passwordRegex.test(form.password)) {
+      return setError(
+        "Password must meet all the following requirements:\n" +
+        "• At least 8 characters\n" +
+        "• One uppercase letter\n" +
+        "• One lowercase letter\n" +
+        "• One number\n" +
+        "• One special character (@$!%*?&)"
+      );
+    }
+
+    // Validate confirm password
+    if (form.password !== form.confirmPassword) {
       return setError("Passwords do not match.");
-    if (!form.dob || !form.gender || !form.address)
+    }
+
+    // Validate profile details
+    if (!form.dob || !form.gender || !form.address.trim()) {
       return setError("Please complete your profile details.");
+    }
+
     setBusy(true);
+
     try {
       await registerPatient({
-        name: form.name,
-        email: form.email,
+        name: form.name.trim(),
+        email: form.email.trim(),
         password: form.password,
         phone: form.phone,
         dob: form.dob,
         gender: form.gender,
-        address: form.address,
+        address: form.address.trim(),
       });
+
       navigate("/patient/dashboard", { replace: true });
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Registration failed. Please try again.");
     } finally {
       setBusy(false);
     }
@@ -100,7 +129,7 @@ const Signup = () => {
                   type="tel"
                   placeholder="Phone Number"
                   value={form.phone}
-                  onChange={(e) => change("phone", e.target.value)}
+                  onChange={(e) => change("phone", e.target.value.replace(/\D/g, ""))}
                 />
               </div>
               <div className="input-group">
@@ -184,7 +213,12 @@ const Signup = () => {
 
               <br />
               {error && (
-                <p style={{ color: "#d33", margin: "8px 0" }}>{error}</p>
+                <p style={{
+                  color: "#ff3333",
+                  margin: "8px 0",
+                  whiteSpace: "pre-line",
+                  lineHeight: "1.6",
+                }}>{error}</p>
               )}
               <button type="submit" className="primary-btn" disabled={busy}>
                 {busy ? "Creating..." : "Create Account"}

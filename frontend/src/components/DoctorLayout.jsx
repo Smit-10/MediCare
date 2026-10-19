@@ -106,8 +106,8 @@ export default function DoctorLayout() {
               <div>{(user?.username || "Doctor").split(" ").map(x => x[0]).join("").slice(0,2).toUpperCase()}</div>
 
               <span>
-                Dr. Rahul Sharma
-                <small>Cardiologist</small>
+                {user?.username || "Doctor"}
+                <small>{user?.specialization || "Doctor"}</small>
               </span>
             </div>
           </div>

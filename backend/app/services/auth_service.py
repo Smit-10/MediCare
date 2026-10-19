@@ -1,39 +1,58 @@
 from app.database import get_connection
 from app.auth.password import hash_password, verify_password
 from app.auth.jwt_handler import create_access_token
+from fastapi import HTTPException,status
 
 def register_user(name: str, email:str, password: str):
     connection = get_connection()
     cursor = connection.cursor()
-    
-    cursor.execute(
-        """SELECT user_id FROM users WHERE email = %s""", (email,)
-    )
-    
-    existing_user = cursor.fetchone()
-    
-    if existing_user:
+    try:
+        
+        cursor.execute(
+                """SELECT user_id FROM users WHERE username = %s""", (name,)
+            )
+
+        existing_user = cursor.fetchone()
+        if existing_user:
+            raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Name alredy registered"
+                    )
+
+        cursor.execute(
+                    """SELECT user_id FROM users WHERE email = %s""", (email,)
+                )
+                
+        existing_user = cursor.fetchone()
+        if existing_user:
+            raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Email already registered"
+                    )
+        
+        hashed_password = hash_password(password)
+        
+        cursor.execute(
+            """INSERT INTO users
+            (username, email, password_hash, role, status)
+            VALUES (%s, %s, %s, 'patient', 'Active')
+            RETURNING user_id, username, email, role, status
+            """,
+            (name, email, hashed_password)
+        )
+        
+        user = cursor.fetchone()
+        connection.commit()
+        
+        return user
+    except Exception:
+        connection.rollback()
+        raise
+
+    finally:
         cursor.close()
         connection.close()
-        return None
-    
-    hashed_password = hash_password(password)
-    
-    cursor.execute(
-        """INSERT INTO users
-        (username, email, password_hash, role, status)
-        VALUES (%s, %s, %s, 'patient', 'Active')
-        RETURNING user_id, username, email, role, status
-        """,
-        (name, email, hashed_password)
-    )
-    
-    user = cursor.fetchone()
-    connection.commit()
-    cursor.close()
-    connection.close()
-    
-    return user
+
 
 def login_user(email: str, password: str):
     connection = get_connection()

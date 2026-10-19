@@ -125,7 +125,7 @@ export function Dashboard() {
   useEffect(() => {
     api("/appointments/")
       .then((r) => setAppointments(r.appointments || []))
-      .catch(() => {});
+      .catch(() => { });
   }, []);
   const upcoming = appointments.filter((a) =>
     ["Pending", "Confirmed"].includes(a.status),
@@ -356,7 +356,8 @@ export function Appointments() {
     setTime(String(a.appointment_time).slice(0, 5));
     setBooking(true);
   };
-  const confirm = async () => {
+  const confirm = async (e) => {
+    e.preventDefault();
     setError("");
     if (!date || !time) return setError("Select date and time.");
     try {
@@ -365,7 +366,7 @@ export function Appointments() {
           method: "PUT",
           body: JSON.stringify({
             appointment_date: date,
-            apppointment_time: time + (time.length === 5 ? ":00" : ""),
+            appointment_time: time + (time.length === 5 ? ":00" : ""),
           }),
         });
         setMsg("Appointment rescheduled successfully.");
@@ -387,6 +388,8 @@ export function Appointments() {
       load();
     } catch (e) {
       setError(e.message);
+      setBooking(false);
+      setSelected(null);
     }
   };
   return (
@@ -408,53 +411,57 @@ export function Appointments() {
         ))}
       </div>
       {booking && (
-        <div className="modal-backdrop">
-          <div className="modal">
-            <h2>{selected ? "Reschedule Appointment" : "Book Appointment"}</h2>
-            <p>{selected ? selected.doctor_name : bookDoctor?.name}</p>
-            <label>
-              Date
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-              />
-            </label>
-            <label>
-              Time
-              <input
-                type="time"
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
-              />
-            </label>
-            {!selected && (
+        <form onSubmit={confirm}>
+          <div className="modal-backdrop">
+            <div className="modal">
+              <h2>{selected ? "Reschedule Appointment" : "Book Appointment"}</h2>
+              <p>{selected ? selected.doctor_name : bookDoctor?.name}</p>
               <label>
-                Reason
+                Date
                 <input
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  placeholder="Reason for appointment"
+                  required
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
                 />
               </label>
-            )}
-            <div className="modal-actions">
-              <button className="primary-btn" onClick={confirm}>
-                Confirm
-              </button>
-              <button
-                type="button"
-                className="secondary-btn"
-                onClick={() => {
-                  setBooking(false);
-                  setSelected(null);
-                }}
-              >
-                Cancel
-              </button>
+              <label>
+                Time
+                <input
+                  required
+                  type="time"
+                  value={time}
+                  onChange={(e) => setTime(e.target.value)}
+                />
+              </label>
+              {!selected && (
+                <label>
+                  Reason
+                  <input
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                    placeholder="Reason for appointment"
+                  />
+                </label>
+              )}
+              <div className="modal-actions">
+                <button type="submit" className="primary-btn">
+                  Confirm
+                </button>
+                <button
+                  type="button"
+                  className="secondary-btn"
+                  onClick={() => {
+                    setBooking(false);
+                    setSelected(null);
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </form>
       )}
     </>
   );
@@ -689,6 +696,8 @@ export function ChangePassword() {
               minLength={8}
               value={form.new_password}
               onChange={(e) => update("new_password", e.target.value)}
+              pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}"
+              title="Password must contain at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special character."
               required
             />
           </label>
@@ -700,6 +709,8 @@ export function ChangePassword() {
               minLength={8}
               value={form.confirm_password}
               onChange={(e) => update("confirm_password", e.target.value)}
+              pattern={form.new_password.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}
+              title="New password and confirmation do not match."
               required
             />
           </label>
@@ -708,7 +719,7 @@ export function ChangePassword() {
               type="checkbox"
               checked={showPasswords}
               onChange={(e) => setShowPasswords(e.target.checked)}
-            />{" "}
+            />
             Show passwords
           </label>
           <button className="primary-btn" type="submit" disabled={busy}>

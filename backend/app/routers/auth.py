@@ -35,11 +35,16 @@ oauth.register(
 def register(user: UserRegister):
     result = register_user(user.name, user.email, user.password)
     
-    if result is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
-        )
+    # if result.email is None:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_400_BAD_REQUEST,
+    #         detail="Email already registered"
+    #     )
+    # if result.name is None:
+    #         raise HTTPException(
+    #             status_code=status.HTTP_400_BAD_REQUEST,
+    #             detail="Email already registered"
+    #         )
     
     return {
         "message": "User registered successfully",
