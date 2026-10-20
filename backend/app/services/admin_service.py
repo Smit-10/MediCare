@@ -38,12 +38,13 @@ def get_all_details():
     cursor.execute(
         """
         SELECT
+        (SELECT COUNT(*) FROM users) AS total_users,
         (SELECT COUNT(*) FROM patients) AS total_patients,
         (SELECT COUNT(*) FROM doctors) AS total_doctors,
         (SELECT COUNT(*) FROM appointments) AS total_appointments,
         (SELECT COUNT(*) FROM appointments WHERE status = 'Pending') AS pending_appointments,
-        (SELECT COUNT(*) FROM appointments WHERE status = 'Confirmed') AS completed_appointments,
-        (SELECT COUNT(*) FROM appointments WHERE status = 'Cancelled') AS cancelled_appointments;
+        (SELECT COUNT(*) FROM appointments WHERE status = 'Confirmed') AS confirmed_appointments,
+        (SELECT COUNT(*) FROM appointments WHERE status = 'Cancelled' OR status = 'Rejected') AS cancelled_appointments;
         """,
     )
 
@@ -237,9 +238,23 @@ def get_all_doctors():
 
     cursor.execute(
         """
-    SELECT * FROM doctors
+        SELECT
+        d.doctor_id,
+        d.user_id,
+        d.specialization_id,
+        d.name,
+        d.phone,
+        d.qualification,
+        d.experience,
+        d.bio,
+        d.availability,
+        u.status
+    FROM doctors AS d
+    LEFT JOIN users AS u
+        ON u.user_id = d.user_id;
         """
     )
+
     all_doctors = cursor.fetchall()
 
     cursor.close()
@@ -379,7 +394,8 @@ def search_patients(search:str = None):
                 p.phone,
                 p.dob,
                 p.gender,
-                p.address
+                p.address,
+                u.status
             FROM patients p
             JOIN users u
                 ON p.user_id = u.user_id
@@ -401,7 +417,8 @@ def search_patients(search:str = None):
                 p.phone,
                 p.dob,
                 p.gender,
-                p.address
+                p.address,
+                u.status
             FROM patients p
             JOIN users u
                 ON p.user_id = u.user_id

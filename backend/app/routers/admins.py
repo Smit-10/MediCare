@@ -53,12 +53,13 @@ def get_details(current_user:dict=Depends(get_current_user)): # get_details():
     
     all_details = get_all_details()
 
-    return {"totalpatients" : all_details[0],
-            "totaldoctors" : all_details[1],
-            "totalappointments": all_details[2],
-            "pendingappointments": all_details[3],
-            "completedappointments" : all_details[4],
-            "cancelledappointments": all_details[5]}
+    return {"total_users" : all_details[0],
+            "total_patients" : all_details[1],
+            "total_doctors" : all_details[2],
+            "total_appointments": all_details[3],
+            "pending_appointments": all_details[4],
+            "confirmed_appointments" : all_details[5],
+            "cancelled_or_rejected_appointments": all_details[6]}
 
 
 @router.post("/doctors")
@@ -107,6 +108,7 @@ def view_all_doctors(current_user:dict=Depends(get_current_user)):
             "experience":doctor[6],
             "bio":doctor[7],
             "availability":doctor[8],
+            "status":doctor[9] 
             })
     
     return {
@@ -227,6 +229,7 @@ def search_patient(search:str = None,current_user:dict=Depends(get_current_user)
             "dob":patients[5],
             "gender":patients[6],
             "address":patients[7],
+            "status":patients[8]
             })
     
     return {

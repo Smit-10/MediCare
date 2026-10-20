@@ -138,13 +138,13 @@ export function AdminDashboard() {
 
       <div className="admin-stats-grid">
         <Stat icon={<UsersRound />} title="Total Users"
-          value={data?.total_users ?? "—"} note="registered accounts" />
+          value={data?.["total_users"] ?? "—"} note="registered accounts" />
         <Stat icon={<UserRound />} title="Patients"
-          value={data?.patients ?? "—"} note="patient profiles" />
+          value={data?.["total_patients"] ?? "—"} note="patient profiles" />
         <Stat icon={<Stethoscope />} title="Doctors"
-          value={data?.doctors ?? "—"} note="doctor profiles" />
+          value={data?.["total_doctors"] ?? "—"} note="doctor profiles" />
         <Stat icon={<CalendarDays />} title="Appointments"
-          value={data?.appointments ?? "—"} note="all appointments" />
+          value={data?.["total_appointments"] ?? "—"} note="all appointments" />
       </div>
 
       <div className="admin-grid">
@@ -161,7 +161,7 @@ export function AdminDashboard() {
             ["Pending appointments", "pending_appointments"],
             ["Confirmed appointments", "confirmed_appointments"],
             ["Completed appointments", "completed_appointments"],
-            ["Cancelled / rejected", "cancelled_or_rejected"],
+            ["Cancelled / rejected", "cancelled_or_rejected_appointments"],
           ].map(([label, key]) => (
             <div className="admin-overview-row" key={key}>
               <span>{label}</span>
@@ -394,7 +394,7 @@ export function AdminDoctors() {
                 <td>{doctor.qualification || "—"}</td>
                 <td>{doctor.experience ?? "—"}</td>
                 <td>{doctor.availability || "—"}</td>
-                <td><Status value={doctor.status} /></td>
+                <td><span className={`admin-status ${active ? "active" : "inactive"}`}>{doctor.status || "—"}</span></td>
                 <td>
                   <button
                     type="button"
@@ -558,7 +558,7 @@ export function AdminPatients() {
                 <td>{patient.email || "—"}</td>
                 <td>{patient.phone || "—"}</td>
                 <td>{patient.gender || "—"}</td>
-                <td><Status value={patient.status} /></td>
+                <td><span className={`admin-status ${active ? "active" : "inactive"}`}>{patient.status || "—"}</span></td>
                 <td className="admin-actions">
                   <button
                     type="button"
@@ -775,7 +775,7 @@ export function AdminAppointments() {
               <td>{appointment.date || "—"}</td>
               <td>{String(appointment.time || "").slice(0, 5)}</td>
               <td className="admin-reason">{appointment.reason || "—"}</td>
-              <td>{appointment.status || "—"}</td>
+              <td><span className={`admin-status ${(appointment.status || "").toLowerCase()}`}>{appointment.status || "—"}</span></td>
               <td>
                 <select
                   aria-label={`Update appointment ${appointment.appointment_id}`}
