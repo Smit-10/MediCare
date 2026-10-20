@@ -46,11 +46,11 @@ const Login = () => {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    if (user) {
-      navigate(getDestination(user), { replace: true });
-    }
-  }, [user, navigate]);
+  // useEffect(() => {
+  //   if (user) {
+  //     navigate(getDestination(user), { replace: true });
+  //   }
+  // }, [user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -68,11 +68,12 @@ const Login = () => {
         emailOrPhone.trim(),
         password
       );
+      console.log("Logged-in user role:", loggedInUser.role);
+      console.log("Selected role:", selectedRole);
 
       if (loggedInUser.role !== selectedRole) {
-        setError(
-          `This account is registered as a ${loggedInUser.role}.`
-        );
+        console.log("Role mismatch detected!");
+        setError(`This account is registered as a ${loggedInUser.role}.`);
         return;
       }
 
