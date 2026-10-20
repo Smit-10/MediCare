@@ -44,6 +44,7 @@ def get_all_details():
         (SELECT COUNT(*) FROM appointments) AS total_appointments,
         (SELECT COUNT(*) FROM appointments WHERE status = 'Pending') AS pending_appointments,
         (SELECT COUNT(*) FROM appointments WHERE status = 'Confirmed') AS confirmed_appointments,
+        (SELECT COUNT(*) FROM appointments WHERE status = 'Completed') AS completed_appointments,
         (SELECT COUNT(*) FROM appointments WHERE status = 'Cancelled' OR status = 'Rejected') AS cancelled_appointments;
         """,
     )

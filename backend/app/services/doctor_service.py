@@ -193,7 +193,7 @@ def update_appointment_status(user_id: int, appointment_id: int, new_status: str
     current_status = appointment[1]
     
     # doctor can accept or reject only pending appointments
-    if current_status != 'Pending':
+    if current_status not in {"Pending": ("Confirmed", "Rejected"),"Confirmed": ("Completed",)} :
         cursor.close()
         connection.close()
         

@@ -525,10 +525,13 @@
 }
 
 .admin-status.active,
-.admin-status.confirmed,
-.admin-status.completed {
+.admin-status.confirmed{
     background: rgba(55, 214, 145, .1);
     color: #82e5b1
+}
+.admin-status.completed{
+    background: rgba(33, 150, 243, 0.12);
+    color: #43c2ff;
 }
 
 .admin-status.inactive,

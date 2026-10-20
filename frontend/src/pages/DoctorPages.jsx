@@ -73,7 +73,7 @@ function formatTime(v) {
   });
 }
 
-function AppointmentCard({ appointment, onAccept, onReject }) {
+function AppointmentCard({ appointment, onAccept, onReject, onCompleted }) {
   const status =
     appointment.status === "Confirmed"
       ? "Accepted"
@@ -117,6 +117,7 @@ function AppointmentCard({ appointment, onAccept, onReject }) {
           {status}
         </span>
 
+
         {appointment.status === "Pending" && (
           <div className="doctor-row-actions">
             <button
@@ -139,6 +140,16 @@ function AppointmentCard({ appointment, onAccept, onReject }) {
             </button>
           </div>
         )}
+         {appointment.status === "Confirmed" && (<div className="doctor-row-actions">
+          <button
+            onClick={() => {
+              onCompleted(appointment.appointment_id)
+            }}
+
+          >
+            Completed
+          </button>
+        </div>)}
       </div>
     </div>
   );
@@ -254,6 +265,7 @@ export function DoctorAppointments() {
       });
 
       await load();
+
     } catch (e) {
       setError(e.message);
     }
@@ -291,7 +303,7 @@ export function DoctorAppointments() {
         ))}
       </div>
 
-      {error && <p>{error}</p>}
+      {error && <p className="doctor-password-error">{error}</p>}
 
       <div className="doctor-panel doctor-appointment-list">
         {visible.length > 0 ? (
@@ -304,6 +316,9 @@ export function DoctorAppointments() {
               }
               onReject={() =>
                 update(a.appointment_id, "Rejected")
+              }
+              onCompleted={() =>
+                update(a.appointment_id, "Completed")
               }
             />
           ))

@@ -163,10 +163,10 @@ def update_status(appointment_id: int, appointment: AppointmentStatusUpdate, cur
             detail="Only doctors can update appointment status"
         )
     
-    if appointment.status not in ("Confirmed", "Rejected"):
+    if appointment.status not in ("Confirmed", "Rejected", "Completed"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Status must be Confirmed or Rejection"
+            detail="Status must be Confirmed, Rejected, or Completed"
         )
     
     result, Status = update_appointment_status(

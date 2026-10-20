@@ -59,7 +59,8 @@ def get_details(current_user:dict=Depends(get_current_user)): # get_details():
             "total_appointments": all_details[3],
             "pending_appointments": all_details[4],
             "confirmed_appointments" : all_details[5],
-            "cancelled_or_rejected_appointments": all_details[6]}
+            "completed_appointments" : all_details[6],
+            "cancelled_or_rejected_appointments": all_details[7]}
 
 
 @router.post("/doctors")

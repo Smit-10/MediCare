@@ -345,6 +345,11 @@
     font-weight: 600
 }
 
+.status.pending {
+    background: rgba(244, 200, 109, 0.1);
+    color: #f4c86d;
+}
+
 .status.upcoming {
     background: rgba(33, 150, 243, .12);
     color: #43c2ff
@@ -355,7 +360,7 @@
     color: #54d89c
 }
 
-.status.cancelled {
+.status.cancelled,.status.rejected {
     background: rgba(255, 80, 100, .1);
     color: #ff8490
 }
