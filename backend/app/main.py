@@ -31,3 +31,7 @@ app.include_router(admins.router)
 @app.get("/")
 def home():
     return {"message": "Welcome to MediCare."}
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
