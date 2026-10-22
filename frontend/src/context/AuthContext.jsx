@@ -18,6 +18,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Load the currently authenticated user
   const refreshUser = async () => {
     let result;
 
@@ -31,8 +32,10 @@ export function AuthProvider({ children }) {
     const normalizedUser = {
       ...result.user,
       role: String(result.user?.role || "patient").toLowerCase(),
+      profileCompleted: true,
     };
 
+    // Check whether the patient has completed their profile
     if (normalizedUser.role === "patient") {
       try {
         await api("/patients/profile");
@@ -41,7 +44,10 @@ export function AuthProvider({ children }) {
         if (error.status === 404) {
           normalizedUser.profileCompleted = false;
         } else {
-          throw error;
+          console.error(
+            "Could not check patient profile:",
+            error
+          );
         }
       }
     }
@@ -50,12 +56,14 @@ export function AuthProvider({ children }) {
     return normalizedUser;
   };
 
+  // Check the session when the application loads
   useEffect(() => {
     refreshUser()
       .catch(() => setUser(null))
       .finally(() => setLoading(false));
   }, []);
 
+  // Login using email and password
   const login = async (email, password) => {
     await authLogin(email, password);
 
@@ -70,6 +78,7 @@ export function AuthProvider({ children }) {
     return currentUser;
   };
 
+  // Register a patient using email and password
   const registerPatient = async ({
     name,
     email,
@@ -111,9 +120,10 @@ export function AuthProvider({ children }) {
       }
     }
 
-    return refreshUser();
+    return await refreshUser();
   };
 
+  // Logout the current user
   const logout = async () => {
     try {
       await apiLogout();

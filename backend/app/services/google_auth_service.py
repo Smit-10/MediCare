@@ -95,3 +95,19 @@ def get_or_create_google_user(google_id: str, email: str, name: str):
         "role": user[3],
         "status": user[4]
     }
+    
+def is_patient_profile_complete(user_id: int):
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute(
+            "SELECT 1 FROM patients WHERE user_id = %s",
+            (user_id,)
+        )
+
+        return cursor.fetchone() is not None
+
+    finally:
+        cursor.close()
+        connection.close()

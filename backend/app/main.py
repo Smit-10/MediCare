@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from starlette.middleware.sessions import SessionMiddleware
-from app.config import SECRET_KEY, FRONTEND_URL
+from app.config import SECRET_KEY, FRONTEND_URL, COOKIE_SAMESITE, COOKIE_SECURE
 from app.routers import auth, patients, doctors, appointments,admins
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -8,7 +8,9 @@ app = FastAPI(title="MediCare")
 
 app.add_middleware(
     SessionMiddleware,
-    secret_key=SECRET_KEY
+    secret_key=SECRET_KEY,
+    same_site=COOKIE_SAMESITE,
+    https_only=COOKIE_SECURE
 )
 
 app.add_middleware(

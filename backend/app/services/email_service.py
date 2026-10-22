@@ -1,27 +1,17 @@
-import smtplib
-import ssl
-from email.message import EmailMessage
-
-from app.config import (
-    SMTP_HOST,
-    SMTP_PORT,
-    SMTP_EMAIL,
-    SMTP_APP_PASSWORD,
-)
-
+import resend
+from app.config import RESEND_API_KEY, EMAIL_FROM
 
 def send_otp_email(receiver_email: str, otp: str):
-    if not SMTP_EMAIL or not SMTP_APP_PASSWORD:
-        raise ValueError("SMTP credentials are not configured.")
+    if not RESEND_API_KEY:
+        raise ValueError("RESEND_API_KEY is not configured.")
 
-    message = EmailMessage()
+    resend.api_key = RESEND_API_KEY
 
-    message["Subject"] = "MediCare - Password Reset OTP"
-    message["From"] = SMTP_EMAIL
-    message["To"] = receiver_email
-
-    message.set_content(
-        f"""
+    params = {
+        "from": EMAIL_FROM,
+        "to": [receiver_email],
+        "subject": "MediCare - Password Reset OTP",
+        "text": f"""
 Hello,
 
 Your MediCare password reset OTP is: {otp}
@@ -33,16 +23,6 @@ If you did not request a password reset, please ignore this email.
 Regards,
 MediCare Team
 """
-    )
+    }
 
-    context = ssl.create_default_context()
-
-    with smtplib.SMTP_SSL(
-        SMTP_HOST,
-        SMTP_PORT,
-        context=context,
-        timeout=20
-    ) as server:
-        server.set_debuglevel(1)
-        server.login(SMTP_EMAIL, SMTP_APP_PASSWORD)
-        server.send_message(message)
+    resend.Emails.send(params)

@@ -5,7 +5,7 @@ from authlib.integrations.starlette_client import OAuth
 from app.schemas.auth import UserRegister, Token, ForgotPasswordRequest, ResetPasswordRequest, ChangePasswordRequest
 from app.services.auth_service import register_user, login_user, change_password
 from app.services.password_reset_service import request_password_reset, reset_password as reset_password_service
-from app.services.google_auth_service import get_or_create_google_user
+from app.services.google_auth_service import get_or_create_google_user, is_patient_profile_complete
 from app.auth.jwt_handler import get_current_user, create_access_token
 from app.config import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI, FRONTEND_URL, COOKIE_SAMESITE, COOKIE_SECURE, ACCESS_TOKEN_EXPIRE_MINUTES
 
@@ -146,10 +146,29 @@ async def google_callback(request: Request):
             "role": user["role"]
         }
     )
+    if user["role"] == "patient":
+        if is_patient_profile_complete(user["user_id"]):
+            redirect_url = f"{FRONTEND_URL}/patient/dashboard"
+        else:
+            redirect_url = f"{FRONTEND_URL}/complete-profile"
+
+    elif user["role"] == "doctor":
+        redirect_url = f"{FRONTEND_URL}/doctor/dashboard"
+
+    elif user["role"] == "admin":
+        redirect_url = f"{FRONTEND_URL}/admin/dashboard"
+
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid user role"
+        )
+
+    response = RedirectResponse(url=redirect_url)
     
-    response = RedirectResponse(
-        url = FRONTEND_URL
-    )
+    # response = RedirectResponse(
+    #     url = FRONTEND_URL
+    # )
     
     response.set_cookie(
         key="access_token",
